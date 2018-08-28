@@ -1,89 +1,75 @@
-<!DOCTYPE html>
-<html lang="en">
+var express = require("express");
+var bodyParser = require("body-parser");
+var path = require("path");
 
-<head>
-  <meta charset="UTF-8">
-  <title>Star Wars - Express</title>
-  <!-- Latest compiled and minified CSS & JS -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-  <script src="https://code.jquery.com/jquery.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+var app = express();
+var PORT = process.env.port || 8081;
 
-</head>
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.json());
 
-<body>
+var characters = [
+  {
+    routeName: 'yoda',
+    name: "Yoda",
+    role: "Jedi Master",
+    age: 900,
+    forcePoints: 2000
+  },
+  {
+    routeName: 'darthmaul',
+    name: "Darth Maul",
+    role: "Sith Lord",
+    age: 200,
+    forcePoints: 1200
+  },
+  {
+    routeName: 'obiwankenobi',
+    name: "Obi Wan Kenobi",
+    role: "Jedi Knight",
+    age: 60,
+    forcePoints: 1350
+  }
+];
 
-  <div class="container">
-    <div class="jumbotron">
-      <h1>Star Wars Express</h1>
-      <h3>The greatest resource in the galaxy for Star Wars statistics!</h3>
-      <hr>
-      <a href="/add">
-        <button class="btn btn-danger btn-lg">
-          <span class="fa fa-plus"></span> Add New Character
-        </button>
-      </a>
-    </div>
-    <div class="row">
+app.get("/", function(req, res) {
+  res.sendFile(path.join(__dirname, "view.html"));
+});
 
-      <div class="col-12">
+app.get("/add", function(req, res) {
+  res.sendFile(path.join(__dirname, "add.html"));
+});
 
-        <div class="card mb-4">
-          <div class="card-header">
-            <h3><strong>Character Search</strong></h3>
-          </div>
-          <div class="card-body">
-            <input type="text" id="character-search" class="form-control">
-            <br>
-            <div class="text-right">
-              <button type="submit" class="btn btn-primary btn-md" id="search-btn"><span class="fa fa-search"></span> Search
-                Your Feelings. You know it to be true.</button>
-            </div>
-          </div>
-        </div>
+app.get("/api/characters/:chosen?", function(req, res) {
+  var chosen = req.params.chosen;
+  
+  if(chosen) {
+    for (var i = 0; i < characters.length; i++) {
+      if(chosen === characters[i].routeName) {
+        return res.json(characters[i]);
+      }
+    }
+  }
+  else {
+    return res.json(characters);
+  }
 
-        <div class="card">
-          <div class="card-header">
-            <h3><strong>Character Statistics</strong></h3>
-          </div>
-          <div class="card-body">
-            <h2 id="name">Yoda</h2>
-            <div id="stats">
-              <h3><strong>Role:</strong> <span id="role">Jedi Master</span></h3>
-              <h3><strong>Age:</strong> <span id="age">900</span></h3>
-              <h3><strong>Force Points:</strong> <span id="force-points">2000</span></h3>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  res.send(false);
+});
 
-  <script type="text/javascript">
-    $("#search-btn").on("click", function() {
-      console.log("search button clicked");
-      var searchedCharacter = $("#character-search").val().trim();
+app.post("/api/characters", function(req, res) {
+  var newCharacter = req.body;
 
-      searchedCharacter = searchedCharacter.replace(/\s+/g, "").toLowerCase();
+  newCharacter.routeName = newCharacter.name.replace(/\s+/g, "").toLowerCase();
 
-      $.get("/api/characters/" + searchedCharacter, function(data) {
-        console.log(data);
-        if(data) {
-          $("#stats").show();
-          $("#name").text(data.name);
-          $("#role").text(data.role);
-          $("#age").text(data.age);
-          $("#force-points").text(data.forcePoints);
-        }
-        else {
-          $("#name").text("The force is not strong with this one.");
-          $("#stats").hide();
-        }
-      });
-    });
-  </script>
+  console.log(newCharacter);
 
-</body>
+  characters.push(newCharacter);
 
-</html>
+  res.json(newCharacter);
+
+});
+
+app.listen(PORT, function() {
+  console.log("Server started listening on http://localhost:" + PORT);
+});
